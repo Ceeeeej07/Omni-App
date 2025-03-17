@@ -25,4 +25,10 @@ Route::get('chat/{id}', [ChatController::class, 'chat'])
     ->middleware(['auth', 'verified'])
     ->name('chat');
 
+
+Route::view('mailbox', 'mailbox')
+    ->middleware(['auth', 'verified'])
+    ->name('mailbox');
+
+    
 require __DIR__.'/auth.php';
