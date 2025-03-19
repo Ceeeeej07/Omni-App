@@ -12,14 +12,15 @@ class Email extends Model
 
     protected $fillable = [
         'user_id',
-        'recipient_email',
+        'recipient_email', 
+        'sender_email', 
         'subject',
         'body',
         'attachment',
         'type',
     ];
 
-    // ✅ Fix: Define the relationship with User
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');

@@ -12,14 +12,17 @@ class Inbox extends Component
 
     public function mount()
     {
-        // ✅ Fetch emails where the logged-in user is the recipient
         $this->emails = Email::where('recipient_email', Auth::user()->email)
+            ->whereNotNull('sender_email')
+            ->where('type', 'received')
             ->orderBy('created_at', 'desc')
             ->get();
     }
 
     public function render()
     {
-        return view('livewire.email.inbox');
+        return view('livewire.email.inbox', [
+            'emails' => $this->emails,
+        ]);
     }
 }

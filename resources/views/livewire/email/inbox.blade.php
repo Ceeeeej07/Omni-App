@@ -14,19 +14,31 @@
                     <table class="w-full border">
                         <thead>
                             <tr class="border-b">
+                                <th class="p-2 text-left">From</th>
                                 <th class="p-2 text-left">Subject</th>
-                                <th class="p-2 text-left">Body</th>
                                 <th class="p-2 text-left">Date</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($emails as $email)
-                            <tr class="border-b">
-                                <td class="p-2">{{ $email->subject }}</td>
-                                <td class="p-2">{{ $email->body }}</td>
-                                <td class="p-2">{{ $email->created_at->format('d M Y') }}</td>
+                            @forelse($emails as $email)
+                            <tr class="border-b hover:bg-gray-100">
+                                <td class="p-2">
+                                    {{ $email->sender_email ?? 'Unknown Sender' }}
+                                </td>
+                                <td class="p-2">
+                                    <a href="#" class="text-blue-500">
+                                        {{ $email->subject ?? 'No Subject' }}
+                                    </a>
+                                </td>
+                                <td class="p-2">{{ $email->created_at ? $email->created_at->format('d M Y') : 'Unknown Date' }}</td>
                             </tr>
-                            @endforeach
+                            @empty
+                            <tr>
+                                <td colspan="3" class="p-4 text-center text-gray-500">
+                                    No received emails found.
+                                </td>
+                            </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
