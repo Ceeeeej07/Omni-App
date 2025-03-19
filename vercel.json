@@ -1,6 +1,5 @@
 {
     "version": 2,
-    "framework": "laravel",
     "builds": [
         { "src": "/api/index.php", "use": "vercel-php@0.6.0" },
         { "src": "/public/**", "use": "@vercel/static" }
@@ -28,10 +27,6 @@
         "VIEW_COMPILED_PATH": "/tmp",
         "CACHE_DRIVER": "array",
         "LOG_CHANNEL": "stderr",
-        "SESSION_DRIVER": "cookie",
-        "DB_CONNECTION": "mysql",
-        "DB_DATABASE": "your_database",
-        "DB_HOST": "your_host",
-        "DB_PORT": "3306"
+        "SESSION_DRIVER": "cookie"
     }
 }
