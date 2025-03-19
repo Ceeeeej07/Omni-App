@@ -42,7 +42,7 @@ Route::get('compose', [MailController::class, 'compose'])
     ->name('compose');
 
 
-// Livewire Components Routes for UI
+
 Route::get('sms', [TwilioController::class, 'sms'])
     ->middleware(['auth', 'verified'])
     ->name('sms');
