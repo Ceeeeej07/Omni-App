@@ -14,4 +14,5 @@ class MailController extends Controller
     {
         return view('compose');
     }
+    
 }

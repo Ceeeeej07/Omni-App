@@ -9,7 +9,7 @@ class Kernel extends ConsoleKernel
 {
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('email:fetch')->everyFiveMinutes(); // ✅ Run email fetching every 5 minutes
+        $schedule->command('email:fetch')->everyFiveMinutes(); 
     }
 
     protected function commands()
