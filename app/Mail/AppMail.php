@@ -43,7 +43,8 @@ class AppMail extends Mailable
     public function attachments(): array
     {
         return !empty($this->email->attachment) 
-            ? [Attachment::fromPath(public_path('storage/' . $this->email->attachment))]
+            ? [Attachment::fromPath(storage_path('app/public/' . $this->email->attachment))]
             : [];
     }
+
 }

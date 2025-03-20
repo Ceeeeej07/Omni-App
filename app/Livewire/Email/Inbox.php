@@ -12,6 +12,8 @@ class Inbox extends Component
 
     public function mount()
     {
+        $this->emails = Email::where('type', 'received')->orderBy('created_at', 'desc')->get();
+        
         $this->emails = Email::where('recipient_email', Auth::user()->email)
             ->whereNotNull('sender_email')
             ->where('type', 'received')

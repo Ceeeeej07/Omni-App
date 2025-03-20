@@ -2,11 +2,12 @@
 
 namespace App\Livewire\Email;
 
+use App\Mail\AppMail;
+use App\Models\Email;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use App\Models\Email;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\AppMail;
+use Illuminate\Support\Facades\Storage;
 
 class Compose extends Component
 {
@@ -23,10 +24,14 @@ class Compose extends Component
             'attachment' => 'nullable|file|max:2048',
         ]);
 
-        $attachmentPath = null;
+        $this->attachmentPath = null;
+        $this->attachmentName = null;
 
         if ($this->attachment) {
-            $attachmentPath = $this->attachment->store('attachments', 'public');
+         
+            $this->attachmentName = time() . '_' . $this->attachment->getClientOriginalName();
+            $this->attachmentPath = 'attachments/' . $this->attachmentName;
+            $this->attachment->storeAs('attachments', $this->attachmentName, 'public');
         }
 
         $email = Email::create([
@@ -34,19 +39,31 @@ class Compose extends Component
             'recipient_email' => $this->recipient_email,
             'subject' => $this->subject,
             'body' => nl2br($this->body),
-            'attachment' => $attachmentPath ? 'attachments/' . basename($attachmentPath) : null,
+            'attachment' => $this->attachmentPath,
+            'attachment_name' => $attachmentName ?? null,
             'type' => 'sent',
+            'sender_email' => auth()->user()->email,
         ]);
 
-        Mail::to($this->recipient_email)->send(new AppMail($email));
+        $mailInstance = new AppMail($email);
 
-        // 🔥 Fix: Force Livewire to reset the file input
+        // ✅ Attach file if it exists
+        if ($this->attachmentPath) {
+            $fullPath = Storage::disk('public')->path($this->attachmentPath);
+            $mailInstance->attach($fullPath, [
+                'as' => $this->attachmentName,
+                'mime' => Storage::disk('public')->mimeType($this->attachmentPath),
+            ]);
+        }
+
+        Mail::to($this->recipient_email)->send($mailInstance);
+
         $this->reset(['recipient_email', 'subject', 'body', 'attachment']);
         $this->dispatch('emailSent');
-
-        // 🔥 Fix: Reload the Livewire component to prevent caching issues
-        $this->dispatch('refreshComponent');
+        session()->flash('message', 'Email sent successfully!');
     }
+
+
 
 
     public function render()

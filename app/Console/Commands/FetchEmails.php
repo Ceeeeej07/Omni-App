@@ -5,40 +5,50 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Webklex\IMAP\Facades\Client;
 use App\Models\Email;
+use Illuminate\Support\Facades\Log;
 
 class FetchEmails extends Command
 {
     protected $signature = 'email:fetch';
-    protected $description = 'Fetch new emails from Gmail and store them in the database';
+    protected $description = 'Fetch new emails from IMAP inbox';
 
     public function handle()
     {
-        try {
-            $client = Client::account('default');
-            $client->connect();
+        $client = Client::make([
+            'host'          => env('IMAP_HOST'),
+            'port'          => env('IMAP_PORT'),
+            'encryption'    => env('IMAP_ENCRYPTION'),
+            'validate_cert' => env('IMAP_VALIDATE_CERT', true),
+            'username'      => env('IMAP_USERNAME'),
+            'password'      => env('IMAP_PASSWORD'),
+            'protocol'      => 'imap'
+        ]);
 
-            $folder = $client->getFolder('INBOX'); // Get Inbox
-            $messages = $folder->messages()->unseen()->get(); // Fetch only unread emails
+        try {
+            $client->connect();
+            $inbox = $client->getFolder('INBOX');
+            $messages = $inbox->messages()->unseen()->limit(10)->get();
 
             foreach ($messages as $message) {
                 Email::create([
-                    'user_id' => null, // We don't know the sender’s user ID
-                    'recipient_email' => env('MAIL_FROM_ADDRESS'), // ✅ Your email (receiver)
-                    'sender_email' => $message->getFrom()[0]->mail ?? 'Unknown Sender', // ✅ Store sender's email
-                    'subject' => $message->getSubject() ?? 'No Subject',
-                    'body' => $message->getHTMLBody() ?? $message->getTextBody() ?? 'No Content',
-                    'attachment' => null, // Handle attachments later
-                    'type' => 'received', // ✅ Mark as received email
+                    'user_id' => null,  
+                    'sender_email' => $message->getFrom()[0]->mail,
+                    'recipient_email' => env('IMAP_USERNAME'),
+                    'subject' => $message->getSubject(),
+                    'body' => $message->getTextBody(),
+                    'attachment' => null,
+                    'type' => 'received',
                 ]);
 
-                $message->setFlag('Seen'); // Mark email as read
+                // Mark email as read
+                $message->setFlag('Seen');
             }
 
-            $this->info("Fetched " . count($messages) . " new emails.");
+            Log::info(count($messages) . " new emails fetched successfully.");
+            $this->info(count($messages) . " new emails fetched successfully.");
         } catch (\Exception $e) {
-            $this->error("IMAP Fetch Error: " . $e->getMessage());
+            Log::error('IMAP Fetch Error: ' . $e->getMessage());
+            $this->error('IMAP Fetch Error: ' . $e->getMessage());
         }
     }
-
-
 }

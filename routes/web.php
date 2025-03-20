@@ -52,17 +52,6 @@ Route::get('call', [TwilioController::class, 'call'])
     ->name('call');
 
 
-// Twilio Controller Routes for API functionality
 
-// Route::middleware('auth:sanctum')->group(function () {
-//     Route::post('/send-sms', [TwilioController::class, 'sendSms'])->name('twilio.send-sms');
-//     Route::post('/make-call', [TwilioController::class, 'makeCall'])->name('make-call');
-// });
-
-// // TwiML Routes for Twilio Webhooks
-// Route::post('/twilio/incoming-sms', [TwilioController::class, 'incomingSms'])->name('twilio.incoming-sms');
-// Route::post('/twilio/incoming-call', [TwilioController::class, 'incomingCall'])->name('twilio.incoming-call');
-// Route::post('/twilio/voice-instructions', [TwilioController::class, 'voiceInstructions'])->name('twilio.voice-instructions');
-// Route::post('/twilio/call-status', [TwilioController::class, 'callStatus'])->name('twilio.call-status');
     
 require __DIR__.'/auth.php';
