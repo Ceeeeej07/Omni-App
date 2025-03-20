@@ -77,3 +77,11 @@
         </button>
     </div>
 </div>
+
+<script>
+    window.addEventListener('new-incoming-call', event => {
+        console.log("New incoming call event:", event.detail.call);
+        alert(`Incoming Call from ${event.detail.call.from}!`);
+    });
+
+</script>

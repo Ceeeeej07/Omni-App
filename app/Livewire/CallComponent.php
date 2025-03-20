@@ -14,6 +14,8 @@ class CallComponent extends Component
     public $success = null;
     public $error = null;
 
+    protected $listeners = ['incomingCall' => 'addCall'];
+
     protected $rules = [
         'phoneNumber' => 'required|string|min:10',
         'message' => 'nullable|string|max:500',
@@ -26,10 +28,18 @@ class CallComponent extends Component
 
     public function loadCalls()
     {
+        $this->calls = Call::latest()->get()->toArray();
+
         $this->calls = Call::orderBy('created_at', 'desc')
             ->take(50)
             ->get()
             ->toArray();
+    }
+
+    public function addCall($call)
+    {
+        $this->calls[] = $call;
+        $this->dispatchBrowserEvent('new-incoming-call', ['call' => $call]);
     }
 
     public function makeCall()

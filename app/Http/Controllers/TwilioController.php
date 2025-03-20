@@ -7,6 +7,8 @@ use App\Models\Call;
 use Twilio\Rest\Client;
 use Illuminate\Http\Request;
 use Twilio\TwiML\VoiceResponse;
+use App\Events\IncomingCallEvent;
+use Illuminate\Support\Facades\Log;
 use Twilio\TwiML\MessagingResponse;
 
 class TwilioController extends Controller
@@ -80,24 +82,51 @@ class TwilioController extends Controller
      */
     public function incomingSms(Request $request)
     {
-        // Store the incoming message
-        Sms::create([
-            'sid' => $request->MessageSid,
-            'to' => $request->To,
-            'from' => $request->From,
-            'body' => $request->Body,
-            'status' => 'received',
-            'direction' => 'inbound',
-        ]);
+        Log::info('Incoming SMS Request:', $request->all());
 
-        // Create a response
-        $response = new MessagingResponse();
-        // You can add an auto-reply if needed
-        // $response->message("Thanks for your message! We'll get back to you soon.");
+        try {
+            // Check for required MessageSid
+            if (!$request->has('MessageSid')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'MessageSid is required',
+                ], 400);
+            }
         
-        return response($response->__toString(), 200)
-            ->header('Content-Type', 'text/xml');
+            // Check for duplicate SMS
+            if (Sms::where('sid', $request->MessageSid)->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Duplicate SMS detected, ignoring request',
+                ], 409);
+            }
+        
+            // Save the incoming SMS
+            Sms::create([
+                'sid' => $request->MessageSid,
+                'to' => $request->To,
+                'from' => $request->From,
+                'body' => $request->Body,
+                'status' => 'received',
+                'direction' => 'inbound',
+            ]);
+        
+            // Prepare Twilio XML response
+            $response = new MessagingResponse();
+            $response->message("SMS received successfully!");
+        
+            return response($response->__toString(), 200)
+                ->header('Content-Type', 'text/xml');
+        } catch (\Exception $e) {
+            Log::error('Error saving SMS: ' . $e->getMessage());
+        
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save SMS: ' . $e->getMessage(),
+            ], 500);
+        }
     }
+
 
     /**
      * Make an outbound call using Twilio
@@ -166,31 +195,24 @@ class TwilioController extends Controller
      * Handle incoming call webhook
      */
     public function incomingCall(Request $request)
-    {
-        // Store the incoming call
-        Call::create([
-            'sid' => $request->CallSid,
-            'to' => $request->To,
-            'from' => $request->From,
-            'status' => 'ringing',
-            'direction' => 'inbound',
-        ]);
-        
-        $response = new VoiceResponse();
-        
-        // You can greet the caller
-        $response->say('Thank you for calling. Your call is being processed.');
-        
-        // You could add a gather to collect user input
-        // $gather = $response->gather(['numDigits' => 1, 'action' => route('twilio.process-input')]);
-        // $gather->say('Press 1 to speak with an agent, Press 2 to leave a message.');
-        
-        // Or you could record a message
-        // $response->record(['maxLength' => 30, 'action' => route('twilio.save-recording')]);
-        
-        return response($response->__toString(), 200)
-            ->header('Content-Type', 'text/xml');
-    }
+{
+    $call = Call::create([
+        'sid' => $request->CallSid,
+        'to' => $request->To,
+        'from' => $request->From,
+        'status' => 'ringing',
+        'direction' => 'inbound',
+    ]);
+
+    // Broadcast event to Livewire
+    broadcast(new IncomingCallEvent($call))->toOthers();
+
+    $response = new VoiceResponse();
+    $response->say('You have an incoming call.');
+
+    return response($response->__toString(), 200)
+        ->header('Content-Type', 'text/xml');
+}
 
     /**
      * Handle call status updates

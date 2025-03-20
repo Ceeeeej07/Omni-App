@@ -11,3 +11,7 @@ Broadcast::channel('chat-channel.{userId}', function(User $user, $userId)
 {
     return (int) $user->id === (int) $userId;
 });
+
+Broadcast::channel('calls', function () {
+    return true;
+});
